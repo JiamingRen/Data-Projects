@@ -1,0 +1,4 @@
+"0","#Total unique values for the Columns Series Name and code"
+"0","unique_series <- unique(na.omit(ds_worldDI[c(""Series Name"",""Series Code"")]))"
+"0",""
+"0","unique_series"

@@ -1,0 +1,5 @@
+"0",""
+"0","#get the length of unique series"
+"0","len_unique_series <- unique_series[1] %>% count()"
+"0",""
+"0","len_unique_series"

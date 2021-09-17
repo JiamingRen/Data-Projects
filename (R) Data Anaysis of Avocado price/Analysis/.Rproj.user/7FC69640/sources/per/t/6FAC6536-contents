@@ -1,0 +1,202 @@
+---
+title: "Avocado"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{R packages}
+library(dplyr)
+library(tidyverse)
+library(zoo)
+library(plyr)
+library(visdat)
+library(ggplot2)
+library(readxl)
+```
+
+```{R data wrangling gdp files}
+gdp2015 <- read.csv("2015.csv", skip = 4) %>% na.omit() 
+gdp2016 <- read.csv("2016.csv", skip = 4) %>% na.omit() 
+gdp2017 <- read.csv("2017.csv", skip = 4) %>% na.omit()
+gdp2018<- read.csv("2018.csv", skip = 4) %>% na.omit()
+gdp2019<- read.csv("2019.csv", skip = 4) %>% na.omit()
+gdp2020<- read.csv("2020.csv", skip = 4) %>% na.omit()
+
+#change wide to long format
+all_gdp <- gdp2015 %>%
+  left_join(gdp2016,by=c('GeoFips','GeoName')) %>%
+  left_join(gdp2017,by=c('GeoFips','GeoName')) %>% 
+  left_join(gdp2018,by=c('GeoFips','GeoName')) %>% 
+  left_join(gdp2019,by=c('GeoFips','GeoName')) %>% 
+  left_join(gdp2020,by=c('GeoFips','GeoName')) %>% 
+  gather('Time_gdp','Quarterly_gdp',-GeoFips,-GeoName)
+
+#remove X e.g., X2015.Q1 -> 2015Q1
+all_gdp$Time_gdp <- 
+  stringr::str_replace(all_gdp$Time,"X","")
+
+all_gdp$Time_gdp <- 
+  stringr::str_replace(all_gdp$Time,"\\.","")
+
+
+#change time formate 2015Q1 -> 2015
+all_gdp$Time_gdp <- as.yearqtr(all_gdp$Time_gdp, format = "%YQ%q")
+
+#rename columns
+colnames(all_gdp)[2] <-"states"
+
+all_gdp %>% vis_miss()
+
+all_gdp %>% 
+  ggplot(aes(x=Time_gdp,y=log(Quarterly_gdp),group=states,color=states))+
+  geom_boxplot()
+```
+
+```{r}
+
+pop <- read.csv("race.csv") 
+pop <- 
+  pop %>% 
+  select(-c(ORIGIN,SUMLEV,REGION,STATE,CENSUS2010POP,DIVISION,ESTIMATESBASE2010,POPESTIMATE2010,POPESTIMATE2011,POPESTIMATE2012,POPESTIMATE2013,POPESTIMATE2014,AGE))%>% 
+  group_by(NAME,SEX,RACE) %>% dplyr::summarise(pop2015 = sum(POPESTIMATE2015),pop2016 = sum(POPESTIMATE2016),pop2017 = sum(POPESTIMATE2017),pop2018 = sum(POPESTIMATE2018),pop2019 = sum(POPESTIMATE2019))
+
+#change sex name
+pop$SEX<-pop$SEX %>% 
+  as.character() %>% 
+  as.factor() %>% 
+  mapvalues(pop$SEX,from = c("0","1","2"), to = c("Total","Male","Female"))
+
+#change race name
+pop$RACE<-pop$RACE %>% 
+  as.character() %>% 
+  as.factor() %>% 
+  mapvalues(pop$RACE,from = c("1","2","3","4","5","6"), to = c("White","Black","American Indian","Asian",'Native Islander',"Two or more races"))
+pop %>% vis_miss()
+```
+
+```{r}
+#row combined 
+volume2019 <- read_csv("volume2019.csv",col_select = -c("Status"))
+volume2020 <- read_csv("volume2020.csv",col_select = -c("Status"))
+volume2021 <- read_csv("volume2021.csv",col_select = -c("Status"))
+volume <- volume2019 %>% rbind(volume2020,volume2021)
+volume$Week<-as.Date(volume$Week,"%b %d,%Y")
+volume %>% vis_miss()
+```
+
+```{r}
+#wrangling temp dataset
+temp <- read_csv("temp.csv",col_select = -c("Location ID","Rank","Anomaly (1901-2000 base period)","1901-2000 Mean"),skip = 3)
+temp$Date <- as.Date(paste(temp$Date,"01"),"%Y%m%d")
+temp %>% vis_miss()
+```
+
+```{r}
+#avocado
+avocado <- read_csv("sale.csv")
+colnames(avocado)[13] <- "states"
+```
+
+```{r}
+#population 
+statepop <- read_xlsx("State Population Totals 2010-2020.xlsx",skip =3)
+colnames(statepop)[1] <- "states"
+statepop <- statepop %>%
+  select(c(states,"2015","2016","2017","2018","2019")) %>%
+  na.omit()
+statepop$states<-stringr::str_replace(statepop$states,"\\.", "")
+```
+
+```{r}
+us_state_capitals <- read_csv("us-state-capitals.csv")
+us_state_capitals$description <- us_state_capitals$description %>% 
+  stringr::str_replace("<br>","")
+```
+
+```{r}
+#a)	Hass avocado sales relationship with GDP per state. Does Income affect sales?
+#1.group by year, state, and type
+#2. summarize all other numeric values
+#3. use python do data wrangling
+#4. left join two tables
+#5. the population is for 2019. total_volume / population to check average consumption per people
+#6. find top 5 cities and bot 5 cities, combined into a csv and output
+
+
+#group by year, state, and type
+avocado_year <- avocado %>% 
+  group_by(year,states,type) %>% 
+  dplyr::summarise(average_price=mean(average_price),total_volume = sum(total_volume),type4046= sum(`4046`), type4225= sum(`4225`), type4770= sum(`4770`),total_bags = sum(total_bags),small_bags = sum(small_bags),large_bags = sum(large_bags),xlarge_bags = sum(xlarge_bags))
+#output csv files to use python to do data wranglings
+write.csv(avocado_year,"C:\\Users\\10673\\FIT5147\\Avocado\\avocado_year.csv")
+write.csv(all_gdp,"C:\\Users\\10673\\FIT5147\\Avocado\\all_gdp.csv")
+
+avocado_year <- read_csv("avocado_year_cleaned.csv")
+city <- read_csv('us-cities-top-1k.csv')
+colnames(avocado_year)[4] <- "City"
+avocado_year <-avocado_year %>% left_join(city, by="City") %>% na.omit()
+write.csv(avocado_year,"C:\\Users\\10673\\FIT5147\\Avocado\\avocado_year_city.csv")
+```
+
+```{r}
+v<- avocado_year$states %>% as.factor() %>% levels()
+c <- all_gdp$states %>% as.factor() %>% levels()
+f <- us_state_capitals$description %>% as.factor() %>% levels()
+
+```
+
+```{r}
+v
+```
+
+```{r}
+p <- read_csv('us-cities-top-1k.csv')
+p
+```
+
+```{}
+
+```
+
+```{}
+
+```
+
+```{}
+
+```
+
+```{}
+
+```
+
+```{}
+
+```
+
+```{}
+
+```
+
+```{}
+
+```
+
+```{}
+
+```
+
+```{}
+
+```
+
+```{}
+
+```
+
+```{}
+
+```

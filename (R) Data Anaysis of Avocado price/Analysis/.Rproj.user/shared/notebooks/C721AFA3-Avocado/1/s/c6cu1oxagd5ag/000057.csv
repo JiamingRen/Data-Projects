@@ -1,0 +1,16 @@
+"0","avocado_volume2019_2020_us %>% 
+  ggplot(aes(x=date))+
+  geom_line(aes(y=total_volume))+
+  geom_line(aes(y=average_price))+
+  scale_y_continuous(
+    
+    # Features of the first axis
+    name = ""First Axis"",
+    
+    # Add a second axis and specify its features
+    sec.axis = sec_axis(~.*1.2, name=""Second Axis"")
+  )
+"
+"2","Error: Aesthetics must be either length 1 or the same as the data (23): y
+[90mRun `rlang::last_error()` to see where the error occurred.[39m
+"

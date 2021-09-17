@@ -1,0 +1,7 @@
+"0",""
+"0","#plot graph for each country"
+"0","average_period %>% "
+"0","  ggplot(aes(Period, average,color=`Country Name`,group=`Country Name`))+"
+"0","  geom_line()+"
+"0","  facet_wrap(~`Country Name`,scale=""free"")"
+"0",""

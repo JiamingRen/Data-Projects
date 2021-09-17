@@ -1,0 +1,7 @@
+"0","#convert the table from wide to long. group by year and value"
+"0","year_value <- filtered_ds_worldDI %>% gather(Year, Value, -""Country Name"", -""Country Code"", -""Series Name"",  -""Series Code"")"
+"0",""
+"0","#print into a table about how much missing value for each year in percentage"
+"0","year_value %>% "
+"0","  group_by(Year) %>% "
+"0","  summarise(Percentage = mean(is.na(Value)*100), Na_rows= is.na(Value) %>% sum(), total_rows = Value %>% length())"

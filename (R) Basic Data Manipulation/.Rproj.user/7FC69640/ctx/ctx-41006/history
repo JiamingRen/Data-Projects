@@ -1,0 +1,182 @@
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(tidyverse)
+library(ggplot2)
+library(tidyverse)
+library(ggplot2)
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE)
+ds_worldDI = read_csv("World_Development_Indicators.csv")
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+ds_worldDI = read_csv("World_Development_Indicators.csv")
+ds_worldDI.head()
+head(ds_worldDI)
+view(ds_worldDI)
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+ds_worldDI = read_csv("World_Development_Indicators.csv")
+##display first 5 records
+head(ds_worldDI)
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+ds_worldDI = read_csv("World_Development_Indicators.csv")
+##display first 5 records
+head(ds_worldDI)
+str(ds_worldDI)
+view(ds_worldDI)
+summarise(ds_worldDI)
+table(ds_worldDI)
+str(ds_worldDI)
+ncol(ds_worldDI)
+nrow(ds_worldDI)
+str(ds_worldDI)
+#number of columns
+ncol(ds_worldDI)
+#number of rows
+nrow(ds_worldDI)
+#the structure of dataset
+str(ds_worldDI)
+print("number of columns")
+ncol(ds_worldDI)
+#number of rows
+nrow(ds_worldDI)
+#the structure of dataset
+str(ds_worldDI)
+print(number of columns)
+print(number of columns)
+print(number of columns)
+#number of columns
+print("number of columns")
+ncol(ds_worldDI)
+#number of rows
+print("number of rows")
+nrow(ds_worldDI)
+#the structure of dataset
+print("the structure of dataset")
+str(ds_worldDI)
+unique(ds_worldDI["Series Name"])
+count(unique(ds_worldDI["Series Name"]))
+length(unique(ds_worldDI["Series Name"]))
+summarise(ds_worldDI["Series Name"])
+unique(ds_worldDI["Series Name"])
+print("Total unique values for the Columns Series Name: ")
+count(unique(ds_worldDI["Series Name"]))
+print("Total unique values for the Columns Series Name: ")
+count(unique(ds_worldDI["Series Name"]))
+print("Total unique values for the Columns Series Name: " + count(unique(ds_worldDI["Series Name"])))
+#Total unique values for the Columns Series Name
+count(unique(ds_worldDI["Series Name"]))
+#print the first 9 series
+head(unique(ds_worldDI["Series Name"],9)
+#print the first 9 series
+head(unique(ds_worldDI["Series Name"],9)
+#print the first 9 series
+head(unique(ds_worldDI["Series Name"])(9)
+#print the first 9 series
+head(unique(ds_worldDI["Series Name"], n = 9)
+#print the first 9 series
+head(unique(ds_worldDI["Series Name"], n = 9)
+#print the first 9 series
+head(unique(ds_worldDI["Series Name"], n = 9)
+#print the first 9 series
+head(unique(ds_worldDI["Series Name"], n = 9L)
+#print the first 9 series
+unique(ds_worldDI["Series Name"])[1:9]
+#print the first 9 series
+unique(ds_worldDI["Series Name"])[1:9,]
+#get series that contain the keyword fertility
+unique(ds_worldDI["Series Name"]&fertility)
+#get series that contain the keyword fertility
+unique(ds_worldDI["Series Name"] == fertility)
+#get series that contain the keyword fertility
+unique(ds_worldDI["Series Name"] == 'fertility')
+#get series that contain the keyword fertility
+ds_worldDI["Series Name"] == 'fertility'
+#get series that contain the keyword fertility
+ds_worldDI["Series Name"][ds_worldDI["Series Name"] %like% 'fertility']
+#get series that contain the keyword fertility
+ds_worldDI[grep("fertility",ds_worldDI["Series Name"])]
+#get series that contain the keyword fertility
+ds_worldDI[grep("fertility",ds_worldDI["Series Name"]),]
+#get series that contain the keyword fertility
+ds_worldDI[grep("fertility",ds_worldDI["Series Name"]),Series Name]
+#get series that contain the keyword fertility
+ds_worldDI[grep("fertility",ds_worldDI["Series Name"]),]
+#get series that contain the keyword fertility
+ds_worldDI[,grep("fertility",ds_worldDI["Series Name"])]
+#get series that contain the keyword fertility
+ds_worldDI[grep("fertility",ds_worldDI["Series Name"]),"Series Name"]
+#get series that contain the keyword fertility
+ds_worldDI[grep("fertility",ds_worldDI["Series Name"]),]
+#get series that contain the keyword Fertility
+ds_worldDI[grep("Fertility",ds_worldDI["Series Name"]),]
+#get series that contain the keyword Fertility
+ds_worldDI[grep("Fertility ",ds_worldDI["Series Name"]),]
+#get series that contain the keyword Fertility
+head(ds_worldDI)
+#get series that contain the keyword Fertility
+ds_worldDI[grep("Fertility",ds_worldDI["Series Name"]),]
+#get series that contain the keyword Fertility
+ds_worldDI[grep("Fert",ds_worldDI["Series Name"]),]
+#get series that contain the keyword Fertility
+ds_worldDI[grep("Fe",ds_worldDI["Series Name"]),]
+#get series that contain the keyword Fertility
+ds_worldDI[grep("F",ds_worldDI["Series Name"]),]
+install.packages(stringr)
+install.packages("stringr")
+knitr::opts_chunk$set(echo = TRUE)
+install.packages("stringr")
+install.packages("tidyverse")
+install.packages("ggplot2")
+install.packages("tidyr")
+library(tidyverse)
+library(ggplot2)
+library(stringr)
+library(tidyr)
+ds_worldDI = read_csv("World_Development_Indicators.csv")
+##display first 5 records
+head(ds_worldDI)
+#number of columns
+print("number of columns")
+ncol(ds_worldDI)
+#number of rows
+print("number of rows")
+nrow(ds_worldDI)
+#the structure of dataset
+print("the structure of dataset")
+str(ds_worldDI)
+#Total unique values for the Columns Series Name
+count(unique(ds_worldDI["Series Name"]))
+#print the first 9 unique series
+unique(ds_worldDI["Series Name"])[1:9,]
+#get series that contain the keyword Fertility
+ds_worldDI[grep("Fertility",ds_worldDI["Series Name"]),]
+#get series that contain the keyword Fertility
+ds_worldDI[str_detect(ds_worldDI["Series Name"], ["Fertility","fertility"]),]
+#get series that contain the keyword Fertility
+ds_worldDI[str_detect(ds_worldDI["Series Name"], ["Fertility","fertility"]),]
+#get series that contain the keyword Fertility
+ds_worldDI[str_detect(ds_worldDI["Series Name"], c("Fertility","fertility")),]
+#get series that contain the keyword Fertility
+ds_worldDI[str_detect(ds_worldDI["Series Name"], c("Fertility")),]
+#get series that contain the keyword Fertility
+ds_worldDI[str_detect(ds_worldDI["Series Name"], c("Fertility")),]
+#get series that contain the keyword Fertility
+ds_worldDI[str_detect(ds_worldDI["Series Name"], "Fertility"),]
+#get series that contain the keyword Fertility
+ds_worldDI[str_detect(ds_worldDI["Series Name"], "Fert"),]
+#get series that contain the keyword Fertility
+ds_worldDI[str_detect(ds_worldDI["Series Name"], "Fert "),]
+#get series that contain the keyword Fertility
+ds_worldDI[str_detect(ds_worldDI["Series Name"], "hi"),]
+install.packages("stringr")
+install.packages("tidyverse")
+install.packages("ggplot2")
+install.packages("tidyr")
+install.packages("data.table")

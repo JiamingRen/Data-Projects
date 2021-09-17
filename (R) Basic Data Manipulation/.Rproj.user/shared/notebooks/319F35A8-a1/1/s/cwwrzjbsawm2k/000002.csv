@@ -1,0 +1,12 @@
+"0","ds_worldDI = read_csv(""World_Development_Indicators.csv"")"
+"2","[1m[1mRows: [1m[22m[34m[34m12157[34m[39m [1m[1mColumns: [1m[22m[34m[34m64[34m[39m
+"
+"2","[36m--[39m [1m[1mColumn specification[1m[22m [36m---------------------------------------------------------------------------------------------------------------------------------------[39m
+[1mDelimiter:[22m "",""
+[31mchr[39m  (4): Country Name, Country Code, Series Name, Series Code
+[32mdbl[39m (60): 1960.00, 1961.00, 1962.00, 1963.00, 1964.00, 1965.00, 1966.00, 1967.00, 1968.00, 1969.00, 1970.00, 1971.00, 1972.00, 1973.00, 1974.00, 1975.00, 1...
+"
+"2","
+[36mi[39m Use [38;5;235m[48;5;253m[38;5;235m[48;5;253m`spec()`[48;5;253m[38;5;235m[49m[39m to retrieve the full column specification for this data.
+[36mi[39m Specify the column types or set [38;5;235m[48;5;253m[38;5;235m[48;5;253m`show_col_types = FALSE`[48;5;253m[38;5;235m[49m[39m to quiet this message.
+"

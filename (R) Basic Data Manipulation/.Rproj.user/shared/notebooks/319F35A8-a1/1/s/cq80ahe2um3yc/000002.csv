@@ -1,0 +1,5 @@
+"0","#statistical data only for min and max and mean"
+"0","year_value %>% "
+"0","  group_by(Year) %>% "
+"0","  summarise(Min =Value %>% min(na.rm = T), Max = Value %>% max(na.rm=T), Mean = Value %>%  mean(na.rm=T)) %>% "
+"0","  filter(Year == c(""2010.00"",""2011.00"",""2012.00"",""2013.00"",""2014.00"",""2015.00"",""2016.00"",""2017.00"",""2018.00"",""2019.00""))"

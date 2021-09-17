@@ -1,0 +1,215 @@
+---
+title: "Jiaming Ren 217218863 Assignment 1"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r load libraries}
+library(tidyverse)
+library(ggplot2)
+library(stringr)
+library(tidyr)
+library(data.table)
+library(dplyr)
+library(naniar)
+```
+# Q1
+## read the World_development_Indicators.csv
+```{r read dataset}
+ds_worldDI = read_csv("World_Development_Indicators.csv")
+```
+## display head of dataset
+```{r }
+##display first 5 records
+head(ds_worldDI)
+```
+
+## columns and rows of dataset
+```{r rows, columns and structure of dataset}
+#number of columns
+print("number of columns")
+ncol(ds_worldDI)
+
+#number of rows
+print("number of rows")
+nrow(ds_worldDI)
+
+#the structure of dataset
+print("the structure of dataset")
+str(ds_worldDI)
+```
+# Q2 
+## 1.Select unique value of series name and code
+## 2.count unique series 
+## 3.print first 9 rows
+## 4.find how many contain the keyword fertility
+```{r }
+#Total unique values for the Columns Series Name and code
+unique_series <- unique(na.omit(ds_worldDI[c("Series Name","Series Code")]))
+
+unique_series
+
+#get the length of unique series
+len_unique_series <- unique_series[1] %>% count()
+
+len_unique_series
+
+```
+
+```{r }
+#print the first 9 unique series
+unique_series %>% head(9)
+```
+
+```{r }
+#get series that contain the keyword Fertility
+fertility <- ds_worldDI[str_detect(ds_worldDI$"Series Name", regex("fertility",ignore_case = T)), ] 
+fertility %>% length()
+
+#get unique series that contain the keyword Fertility
+unique_fertility <- unique_series %>% filter(`Series Name` == regex("Fertility", ignore_case = T))
+#row numbers of rows that contain fertility
+unique_fertility %>% length()
+unique_fertility
+```
+
+## (1) top 5 countries
+### 1. get all rows for GDP (current US$)
+### 2. sort the dataset and get top 5 countries with highest GDP (current US$) in 2019
+## (2) bottom 5 countries
+### 3. sort the dataset and get bottom 5 countries with hightest GDP (current US$) in 2019
+### 4. only keep the GDP data related to the 10 countries
+
+```{r }
+#select country name and 2019.00 columns
+gdp_2019 <- ds_worldDI %>% filter(ds_worldDI$"Series Name" == "GDP (current US$)") %>% select("Country Name", "2019.00")
+
+#sort the rows by the column 2019.00 and select bottom 5 countries
+bot <- gdp_2019 %>% arrange(gdp_2019$"2019.00") %>% head(5)
+bot
+#sort the rows by the column 2019.00 and select top 5 countries
+top <- gdp_2019 %>% arrange(desc(gdp_2019$"2019.00")) %>% head(5)
+top
+#combined two top and bot datasets
+filtered_countries <- rbind(top,bot)$"Country Name"
+
+#filter and keep the GDP data related to the 10 coutries
+filtered_ds_worldDI <- ds_worldDI %>% filter(ds_worldDI$"Country Name" %in% filtered_countries)
+filtered_ds_worldDI
+```
+
+# Q4
+## 1. count how many columns contain missing values
+## 2. list each of these columns with the corresponding missingess percentages
+```{r }
+#visualize each of year columns with the corresponding missing percentages  
+vis_miss(filtered_ds_worldDI[,c(-1,-2,-3,-4)])
+
+```
+
+```{r }
+#convert the table from wide to long. group by year and value
+year_value <- filtered_ds_worldDI %>% gather(Year, Value, -"Country Name", -"Country Code", -"Series Name",  -"Series Code")
+
+#print into a table about how much missing value for each year in percentage
+year_value %>% 
+  group_by(Year) %>% 
+  summarise(Percentage = mean(is.na(Value)*100), Na_rows= is.na(Value) %>% sum(), total_rows = Value %>% length())
+```
+#Q5
+## 1. display statistical infromation. min max and mean of the gdp from 2010 - 2019
+```{r }
+#statistical data only for min and max and mean
+year_value %>% 
+  group_by(Year) %>% 
+  summarise(Min =Value %>% min(na.rm = T), Max = Value %>% max(na.rm=T), Mean = Value %>%  mean(na.rm=T)) %>% 
+  filter(Year == c("2010.00","2011.00","2012.00","2013.00","2014.00","2015.00","2016.00","2017.00","2018.00","2019.00"))
+
+#all statistical from 2010 - 2019
+summary(filtered_ds_worldDI[55:length(colnames(filtered_ds_worldDI))])
+```
+# Q6
+## 1.get all china value from the year_value table
+## 2.print max gdp for china 
+## 3.print min gdp for china
+```{r }
+#select china and gdp rows
+China_df<-year_value %>% 
+  filter(`Country Name` == "China") %>% 
+  filter(`Series Name` == "GDP (current US$)")
+
+print("max gdp:")
+China_df$Value %>% max()
+print("min gdp:")
+China_df$Value %>% min()
+  
+```
+# Q7
+## 1.filter all GDP information for 10 selected countries (top5 and bot5).
+## 2.plot GDP for 10 selected countries over all years.
+## 3.answer question what is one advantage and one idsadvantage of including all these countries in one plot
+```{r }
+#filter to get GDP (current US$) series for each Country in each year
+ten_gdp <- year_value %>% 
+  filter(`Series Name` == "GDP (current US$)")
+
+#plot all ten countries in one graph
+ten_gdp %>% 
+  ggplot(aes(Year, Value, group=`Country Name`, color = `Country Name`))+
+  geom_line() +
+  geom_point()
+
+#the advantage is that it is easier to compare each country in one graph
+#the disadvantage is that the top 5 and bot 5 countries has dramastic different of GDP. From the graph, you can see the bot countries are stacked into one line.
+```
+# Q8
+## 1.create a new column and name it as Period
+## 2.assign Period factors 
+## 3.create a table that shows mean of each period for each country
+## 4.plot graph for each country
+```{r }
+#add a Period columns
+ten_gdp$Period<-''
+
+#label Periods
+ten_gdp$Period[ten_gdp$Year <1970 &ten_gdp$Year >=1960]<- "Period1"
+ten_gdp$Period[ten_gdp$Year <1980 &ten_gdp$Year >=1970]<- "Period2"
+ten_gdp$Period[ten_gdp$Year <1990 &ten_gdp$Year >=1980]<- "Period3"
+ten_gdp$Period[ten_gdp$Year <2000 &ten_gdp$Year >=1990]<- "Period4"
+ten_gdp$Period[ten_gdp$Year <2010 &ten_gdp$Year >=2000]<- "Period5"
+ten_gdp$Period[ten_gdp$Year <2020 &ten_gdp$Year >=2010]<- "Period6"
+
+#create a table that shows mean of each period for each country
+average_period <- ten_gdp %>% group_by(`Country Name`, Period) %>% summarise(average = Value %>% mean(na.rm = T), .groups = 'drop')
+average_period
+
+#plot graph for each country
+average_period %>% 
+  ggplot(aes(Period, average,color=`Country Name`,group=`Country Name`))+
+  geom_line()+
+  facet_wrap(~`Country Name`,scale="free")
+
+```
+
+# Q9
+## 1.subset America with GDP
+## 2.swap wide table to long table
+## 3.assign mean value to all NA
+```{r }
+#subset America with GDP
+America <- filtered_ds_worldDI %>% filter(`Country Name` == "United States") %>% filter(`Series Name` == "GDP (current US$)")
+
+#swap wide table to long table
+America <- America %>% gather(Year,Value, -"Country Name", -"Country Code", -"Series Name", -"Series Code")
+
+#assign mean value to NA
+America$Value[is.na(America$Value)] <- America$Value %>% mean(na.rm=T)
+
+America
+```

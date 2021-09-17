@@ -1,0 +1,6 @@
+"0","#select country name and 2019.00 columns"
+"0","gdp_2019 <- ds_worldDI %>% filter(ds_worldDI$""Series Name"" == ""GDP (current US$)"") %>% select(""Country Name"", ""2019.00"")"
+"0",""
+"0","#sort the rows by the column 2019.00 and select bottom 5 countries"
+"0","bot <- gdp_2019 %>% arrange(gdp_2019$""2019.00"") %>% head(5)"
+"0","bot"

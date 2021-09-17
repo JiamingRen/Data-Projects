@@ -1,0 +1,6 @@
+"0","#combined two top and bot datasets"
+"0","filtered_countries <- rbind(top,bot)$""Country Name"""
+"0",""
+"0","#filter and keep the GDP data related to the 10 coutries"
+"0","filtered_ds_worldDI <- ds_worldDI %>% filter(ds_worldDI$""Country Name"" %in% filtered_countries)"
+"0","filtered_ds_worldDI"

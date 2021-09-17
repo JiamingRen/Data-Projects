@@ -1,0 +1,426 @@
+---
+title: "Avocado"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{R packages}
+library(dplyr)
+library(tidyverse)
+library(zoo)
+library(plyr)
+library(visdat)
+library(ggplot2)
+library(readxl)
+library(gridExtra)
+library(lubridate)
+```
+
+```{R data wrangling gdp files}
+gdp2015 <- read.csv("2015.csv", skip = 4) %>% na.omit() 
+gdp2016 <- read.csv("2016.csv", skip = 4) %>% na.omit() 
+gdp2017 <- read.csv("2017.csv", skip = 4) %>% na.omit()
+gdp2018<- read.csv("2018.csv", skip = 4) %>% na.omit()
+gdp2019<- read.csv("2019.csv", skip = 4) %>% na.omit()
+gdp2020<- read.csv("2020.csv", skip = 4) %>% na.omit()
+
+#change wide to long format
+all_gdp <- gdp2015 %>%
+  left_join(gdp2016,by=c('GeoFips','GeoName')) %>%
+  left_join(gdp2017,by=c('GeoFips','GeoName')) %>% 
+  left_join(gdp2018,by=c('GeoFips','GeoName')) %>% 
+  left_join(gdp2019,by=c('GeoFips','GeoName')) %>% 
+  left_join(gdp2020,by=c('GeoFips','GeoName')) %>% 
+  gather('Time_gdp','Quarterly_gdp',-GeoFips,-GeoName)
+
+#remove X e.g., X2015.Q1 -> 2015Q1
+all_gdp$Time_gdp <- 
+  stringr::str_replace(all_gdp$Time,"X","")
+
+all_gdp$Time_gdp <- 
+  stringr::str_replace(all_gdp$Time,"\\.","")
+
+
+#change time formate 2015Q1 -> 2015
+all_gdp$Time_gdp <- as.yearqtr(all_gdp$Time_gdp, format = "%YQ%q")
+
+all_gdp$GeoName <-as.factor(all_gdp$GeoName)
+all_gdp$GeoFips <- as.factor(all_gdp$GeoFips)
+  
+#rename columns
+colnames(all_gdp)[2] <-"states"
+
+all_gdp %>% vis_miss()
+
+all_gdp %>% 
+  ggplot(aes(x=Time_gdp,y=log(Quarterly_gdp),group=states,color=states))+
+  geom_boxplot()
+
+remove(gdp2015,gdp2016,gdp2017,gdp2018,gdp2019,gdp2020)
+```
+
+```{r}
+pop <- read.csv("race.csv") 
+pop <- 
+  pop %>% 
+  select(-c(ORIGIN,SUMLEV,REGION,STATE,CENSUS2010POP,DIVISION,ESTIMATESBASE2010,POPESTIMATE2010,POPESTIMATE2011,POPESTIMATE2012,POPESTIMATE2013,POPESTIMATE2014,AGE))%>% 
+  group_by(NAME,SEX,RACE) %>% dplyr::summarise(pop2015 = sum(POPESTIMATE2015),pop2016 = sum(POPESTIMATE2016),pop2017 = sum(POPESTIMATE2017),pop2018 = sum(POPESTIMATE2018),pop2019 = sum(POPESTIMATE2019))
+
+#change sex name
+pop$SEX<-pop$SEX %>% 
+  as.character() %>% 
+  as.factor() %>% 
+  mapvalues(pop$SEX,from = c("0","1","2"), to = c("Total","Male","Female"))
+
+#change race name
+pop$RACE<-pop$RACE %>% 
+  as.character() %>% 
+  as.factor() %>% 
+  mapvalues(pop$RACE,from = c("1","2","3","4","5","6"), to = c("White","Black","American Indian","Asian",'Native Islander',"Two or more races"))
+pop %>% vis_miss()
+```
+
+```{r}
+#row combined 
+volume2019 <- read_csv("Volume 2019.csv",col_select = -c("Status"))
+volume2020 <- read_csv("Volume 2020.csv",col_select = -c("Status"))
+volume <- volume2019 %>% rbind(volume2020)
+volume$Week<-as.Date(volume$Week,"%b %d,%Y")
+volume %>% vis_miss()
+remove(volume2019,volume2020)
+volume
+```
+
+```{r}
+#wrangling temp dataset
+temp <- read_csv("temp.csv",col_select = -c("Location ID","Rank","Anomaly (1901-2000 base period)","1901-2000 Mean"),skip = 3)
+temp$Date <- as.Date(paste(temp$Date,"01"),"%Y%m%d")
+temp %>% vis_miss()
+```
+
+```{r}
+#avocado
+avocado <- read_csv("sale.csv")
+colnames(avocado)[13] <- "City"
+```
+
+```{r}
+#population 
+statepop <- read_xlsx("State Population Totals 2010-2020.xlsx",skip =3)
+colnames(statepop)[1] <- "states"
+statepop <- statepop %>%
+  select(c(states,"2015","2016","2017","2018","2019")) %>%
+  na.omit()
+statepop$states<-stringr::str_replace(statepop$states,"\\.", "")
+```
+
+```{r}
+us_state_capitals <- read_csv("us-state-capitals.csv")
+us_state_capitals$description <- us_state_capitals$description %>% 
+  stringr::str_replace("<br>","")
+```
+
+```{r}
+#Is there any noticeable change of price in different area? Is there a geographic factor?
+
+#1.filter data, find all geographical regions
+#2.average price density between geographical regions (in 5 years)
+#3.find top 5 average cities and bot 5 average cities from all times
+
+
+#1.filter data, find all geographical regions
+#define geographic_region
+geographic_region <- c('California','West','Plains','South Central','Great Lakes','Northeast','Midsouth','Southeast')
+
+#filter data
+geographic_region_df <- avocado %>% 
+  filter(avocado$City%in%geographic_region)
+dev.new(width=10, height=5)
+#plot density graph for average price
+geographic_region_df %>%
+  ggplot(aes(x=average_price,group=City))+
+  geom_density(aes(alpha=0.5,group=type,fill=type))+
+  facet_grid(~ City,margins =T)+
+  theme(text= element_text(size = 15))
+
+geographic_region_df %>%
+  ggplot(aes(x=date,y=average_price,group=City))+
+  geom_point(aes(alpha=0.5,group=type,color=type))+
+  facet_grid(type~ City,margins =T)+
+  geom_smooth(method="lm")
+  theme(text= element_text(size = 15))
+
+#T test for total us organic and conventional
+'Total U.S.'
+total <- avocado %>% 
+  filter(City == "Total U.S.") %>% 
+  select(average_price,type)
+
+t.test(`average_price`~`type`, data=total)
+
+#T test Statistical Significance of total U.S. avocado average price by regions (Northeast and Southcentral):
+north_south <- geographic_region_df %>% 
+  filter(City == 'Northeast'& type == "conventional" | City == 'South Central'& type == "conventional") %>% 
+  select(average_price, City)
+north_south
+
+t.test(`average_price`~`City`, data=north_south)
+
+California_Northeast <- geographic_region_df %>% 
+  filter(City == 'California'& type == "organic" | City == 'Northeast'& type == "organic") %>% 
+  select(average_price, City)
+t.test(`average_price`~`City`, data=California_Northeast)
+```
+
+```{r}
+#What area consume more avocados? Any relationship between consumption and average price?
+avocado %>%
+  filter(City == "Total U.S.") %>% 
+  select(type,date,total_volume,average_price) %>% 
+  ggplot(aes(x=date,y=total_volume,group=type,color=type))+
+  geom_line()+
+  facet_grid(rows = vars(type),scales = "free")+
+  geom_smooth(method = 'lm')
+
+p <- avocado %>%
+  filter(City == "Total U.S.") %>% 
+  select(type,date,total_volume,average_price)
+p1 <- p %>%
+  ggplot(aes(x=date,y=total_volume,group=type,color=type))+
+  geom_line()+
+  facet_grid(rows = vars(type),scales = "free")+
+  geom_smooth(method = 'loess')
+p2 <- p %>%
+  ggplot(aes(x=date,y=average_price,group=type,color=type))+
+  geom_line()+
+  facet_grid(rows = vars(type),scales = "free")+
+  geom_smooth(method = 'loess')
+grid.arrange(p1,p2)
+
+#Spearman's correlation coefficients test of the relationship between Total U.S. total volume and average price in five years.
+cor.test(p$total_volume, p$average_price, method = "spearman")
+
+```
+
+```{r}
+#Do projections affect average price?
+avocado2019_2020_us <- avocado %>% 
+  filter(City == "Total U.S."&year=="2019"|City == "Total U.S."&year=="2020") %>% 
+  select(date, average_price, total_volume, year,type) %>% 
+  group_by(date = floor_date(date,"month"))%>% 
+  group_by(date,type) %>% 
+  dplyr::summarise(average_price=mean(average_price), total_volume = sum(total_volume))
+colnames(avocado2019_2020_us)[4] <- "sold total volume"
+avocado2019_2020_us
+#organic
+organic <- avocado2019_2020_us %>% filter(type == "organic") %>% select(-type)
+#conventional
+conventional <- avocado2019_2020_us %>% filter(type == "conventional") %>% select(-type)
+#total
+total_volume <- avocado2019_2020_us %>% 
+  group_by(date) %>% 
+  dplyr::summarise(average_price= mean(average_price), "sold total volume"=sum(`sold total volume`))
+
+volume2019_2020_us <- volume %>% 
+  select(Week,`Total Volume`) %>% 
+  group_by(Week = floor_date(Week,"month")) %>% 
+  group_by(Week) %>% 
+  dplyr::summarise(Total_Volume = sum(`Total Volume`))
+volume2019_2020_us
+colnames(volume2019_2020_us)[1] <- "date"
+
+
+avocado_volume2019_2020_us <- 
+  volume2019_2020_us %>% 
+  left_join(total_volume,by="date") %>% 
+  na.omit()
+avocado_volume2019_2020_us
+write.csv(avocado_volume2019_2020_us,"C:\\Users\\10673\\FIT5147\\Avocado\\avocado_volume2019_2020_us.csv")
+#Spearman's correlation coefficients test of the relationship between Total U.S. total volume and average price in two years.
+cor.test(avocado_volume2019_2020_us$Total_Volume, avocado_volume2019_2020_us$average_price, method = "spearman")
+
+```
+
+```{r}
+#What is the seasonal pattern for consumption and average price?
+California_temp <- 
+  temp %>%
+  filter(Location == 'California')
+California_temp$Value <- California_temp$Value - 32
+California_temp$Value <- California_temp$Value * 5/9
+colnames(California_temp)[3] <- 'temperature'
+
+newYork_temp <- 
+  temp %>%
+  filter(Location == 'New York')
+newYork_temp$Value <- newYork_temp$Value - 32
+newYork_temp$Value <- newYork_temp$Value * 5/9
+colnames(newYork_temp)[3] <- 'temperature'
+
+#california_avocado
+california_avocado <- avocado %>% 
+  filter(City == 'California') %>% 
+  select(date, average_price, total_volume, year,type) %>% 
+  group_by(date = floor_date(date,"month"))%>% 
+  group_by(date,type) %>% 
+  dplyr::summarise(average_price=mean(average_price), total_volume = sum(total_volume))
+colnames(california_avocado)[1] <- "Date"
+#New_York
+New_York <- avocado %>% 
+  filter(City == 'New York') %>% 
+  select(date, average_price, total_volume, year,type) %>% 
+  group_by(date = floor_date(date,"month"))%>% 
+  group_by(date,type) %>% 
+  dplyr::summarise(average_price=mean(average_price), total_volume = sum(total_volume))
+colnames(New_York)[1] <- "Date"
+
+
+#new york temp vs total volume
+r_NewYork <- New_York %>% 
+  left_join(newYork_temp, by='Date') %>% 
+  group_by(Date) %>% 
+  dplyr::summarise(total_volume=sum(total_volume),temperature = mean(temperature), average_price = mean(average_price))
+r_NewYork
+#Spearman's correlation coefficients test of the relationship between New York total volume and temperature in 2015 -2020 years.
+cor.test(r_NewYork$total_volume, r_NewYork$temperature, method = "spearman")
+
+#Spearman's correlation coefficients test of the relationship between New York average price and temperature in 2015 -2020 years.
+cor.test(r_NewYork$average_price, r_NewYork$temperature, method = "spearman")
+
+
+#California average price vs total volume
+r_California <- california_avocado %>% 
+  left_join(California_temp, by='Date') %>% 
+  group_by(Date) %>% 
+  dplyr::summarise(total_volume=sum(total_volume),temperature = mean(temperature), average_price = mean(average_price))
+r_California
+#Spearman's correlation coefficients test of the relationship between California total volume and temperature in 2015 -2020 years.
+cor.test(r_California$total_volume, r_California$temperature, method = "spearman")
+
+#Spearman's correlation coefficients test of the relationship between California average price and temperature in 2015 -2020 years.
+cor.test(r_California$average_price, r_California$temperature, method = "spearman")
+
+
+#Timelines of average price in California in 2015 – 2020
+n1<-r_NewYork %>%
+  ggplot(aes(x=temperature,y=average_price)) +
+  geom_point()+
+  geom_smooth(method = "lm")
+n2<-r_NewYork %>%
+  ggplot(aes(x=temperature,y=total_volume)) +
+  geom_point()+
+  geom_smooth(method = "lm")
+grid.arrange(n1,n2)
+
+c1<-r_California %>%
+  ggplot(aes(x=temperature,y=average_price)) +
+  geom_point()+
+  geom_smooth(method = "lm")
+c2<-r_California %>%
+  ggplot(aes(x=temperature,y=total_volume)) +
+  geom_point()+
+  geom_smooth(method = "lm")
+grid.arrange(c1,c2)
+#Timeline of consumption in California in 2015 – 2020
+
+```
+
+
+
+
+```{r}
+#a)	Hass avocado sales relationship with GDP per state. Does Income affect sales?
+#1.group by year, state, and type
+#2. summarize all other numeric values
+#3. use python do data wrangling
+#4. left join two tables
+#5. the population is for 2019. total_volume / population to check average consumption per people
+#6. find top 5 cities and bot 5 cities, combined into a csv and output
+
+
+#1.group by year, state, and type
+avocado_year <- avocado %>% 
+  group_by(year,states,type) %>% 
+  #2. summarize all other numeric values
+  dplyr::summarise(average_price=mean(average_price),total_volume = sum(total_volume),type4046= sum(`4046`), type4225= sum(`4225`), type4770= sum(`4770`),total_bags = sum(total_bags),small_bags = sum(small_bags),large_bags = sum(large_bags),xlarge_bags = sum(xlarge_bags))
+#3. use python do data wrangling
+write.csv(avocado_year,"C:\\Users\\10673\\FIT5147\\Avocado\\avocado_year.csv")
+write.csv(all_gdp,"C:\\Users\\10673\\FIT5147\\Avocado\\all_gdp.csv")
+
+avocado_year <- read_csv("avocado_year_cleaned.csv")
+city <- read_csv('us-cities-top-1k.csv')
+'%!in%' <- function(x,y)!('%in%'(x,y))
+geographic_region <- c('California','West','Plains','South Central','Great Lakes','Northeast','Midsouth','Southeast','Total U.S.','West Tex')
+avocado_year<-avocado_year[avocado_year$states%!in%geographic_region,]
+avocado_year
+write.csv(avocado_year,"C:\\Users\\10673\\FIT5147\\Avocado\\avocado_year.csv")
+avocado_year[order(-avocado_year$average_price),] %>% head(10)
+ggplot(avocado_year, aes(x=average_price, fill=type)) + geom_density() + facet_wrap(~type) + theme_minimal()
+```
+
+```{r}
+#3. use python do data wrangling
+write.csv(avocado_year,"C:\\Users\\10673\\FIT5147\\Avocado\\avocado_year.csv")
+write.csv(all_gdp,"C:\\Users\\10673\\FIT5147\\Avocado\\all_gdp.csv")
+
+avocado_year <- read_csv("avocado_year_cleaned.csv")
+city <- read_csv('us-cities-top-1k.csv')
+colnames(avocado_year)[4] <- "City"
+city <- city %>% select(-c(State,lat,lon))
+
+write.csv(avocado_year,"C:\\Users\\10673\\FIT5147\\Avocado\\avocado_year_city.csv")
+
+#5. the population is for 2019. total_volume / population to check average consumption per people
+avocado_year %>% filter(year == "2019")
+
+geographic_region <- c('California','West','Plains','South Central','Great Lakes','Northeast','Midsouth','Southeast')
+geographic_region<-avocado_year[avocado_year$states%in%geographic_region,]
+write.csv(geographic_region,"C:\\Users\\10673\\FIT5147\\Avocado\\geographic_region.csv")
+```
+
+```{r}
+#What is the seasonal pattern for consumption and average price?
+```
+
+```{}
+
+```
+
+```{}
+
+```
+
+```{}
+
+```
+
+```{}
+
+```
+
+```{}
+
+```
+
+```{}
+
+```
+
+```{}
+
+```
+
+```{}
+
+```
+
+```{}
+
+```
+
+```{}
+
+```

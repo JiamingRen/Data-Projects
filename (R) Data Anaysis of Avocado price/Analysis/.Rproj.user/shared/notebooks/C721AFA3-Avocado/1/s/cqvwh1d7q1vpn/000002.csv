@@ -1,0 +1,10 @@
+"0","#population "
+"0","statepop <- read_xlsx(""State Population Totals 2010-2020.xlsx"",skip =3)"
+"2","New names:
+* `` -> ...1
+"
+"0","colnames(statepop)[1] <- ""states"""
+"0","statepop <- statepop %>%"
+"0","  select(c(states,""2015"",""2016"",""2017"",""2018"",""2019"")) %>%"
+"0","  na.omit()"
+"0","statepop$states<-stringr::str_replace(statepop$states,""\\."", """")"
