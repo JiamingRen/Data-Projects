@@ -1,0 +1,411 @@
+---
+title: "Task B & C"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+#load libaries
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(lubridate)
+library(naniar)
+library(inspectdf)
+```
+##Task B
+#### 1. Write code to read the dataset in the file “Olympics_tweets.csv”. After reading, write code to display the dimensions of the dataset with a proper output message. Please make sure that the whole dataset will be read into a dataframe.
+```{r}
+#load “Olympics_tweets.csv”
+olympics_tweets <- read_csv("Olympics_tweets.csv")
+
+#display the dimensions of olympics_tweets
+cat("rows:",dim(olympics_tweets)[1]," columns:",dim(olympics_tweets)[2])
+```
+
+#### 2.Fix the data types by applying the following types to the corresponding columns:
+####    Data type | Column names
+####    Date      | Date, user_created_at
+####    Integer   | User_friends, retweet_count, favorite_count, user_followers
+####    Character | Id, text, user_screen_name, user_location, User_description, language
+####    Boolean   | favorited
+
+##### Fix date types
+##### 1.Check date and user_created_at columns data type and oberserve time object format
+##### 2.use strptime function change format,
+```{r}
+# examine structures
+olympics_tweets[c("date", "user_created_at")] %>% str()
+
+#date column
+olympics_tweets$date <- olympics_tweets$date %>%  strptime("%d/%m/%Y %H:%M") %>% as.POSIXct()
+
+#user_created_at columns
+olympics_tweets$user_created_at <- olympics_tweets$user_created_at %>% strptime("%d/%m/%Y %H:%M") %>% as.POSIXct()
+
+# examine structures
+olympics_tweets[c("date", "user_created_at")] %>% str()
+```
+##### Fix integer types
+```{r}
+# examine structures
+olympics_tweets[c("user_friends", "retweet_count", "favorite_count","user_followers")] %>% str()
+
+#user_friends columns
+olympics_tweets$user_friends <- olympics_tweets$user_friends %>% as.integer()
+
+#retweet_count columns
+olympics_tweets$retweet_count <- olympics_tweets$retweet_count %>% as.integer()
+
+#favorite_count columns
+olympics_tweets$favorite_count <- olympics_tweets$favorite_count %>% as.integer()
+
+#user_followers columns
+olympics_tweets$user_followers <- olympics_tweets$user_followers %>% as.integer()
+```
+##### Fix character type
+
+```{r}
+# examine structures
+olympics_tweets[c("id", "text", "user_screen_name","user_location","user_description", "language")] %>% str()
+
+#id columns
+olympics_tweets$id <- olympics_tweets$id %>% as.character()
+
+#text columns
+olympics_tweets$text <- olympics_tweets$text %>% as.character()
+
+#user_screen_name columns
+olympics_tweets$user_screen_name <- olympics_tweets$user_screen_name %>% as.character()
+
+#user_location columns
+olympics_tweets$user_location <- olympics_tweets$user_location %>% as.character()
+
+#user_description columns
+olympics_tweets$user_description <- olympics_tweets$user_description %>% as.character()
+
+#language columns
+olympics_tweets$language <- olympics_tweets$language %>% as.character()
+```
+##### Fix Boolean type
+```{r}
+# examine structures
+olympics_tweets[c("favorited")] %>% str()
+
+#favorited columns
+olympics_tweets$favorited <- olympics_tweets$favorited %>% as.logical()
+```
+#### 3. The time span of the tweets could be useful in understanding your data and producing better analysis and insights. Write code to display the “text” and “date” value for both the oldest and the most recent tweets in the dataset. Please assume that the data is not sorted based on date and you have to sort it. (Note: NA is not a value)
+
+```{r}
+#get text and date only and remove na 
+text_date <- olympics_tweets %>% 
+  select(text, date) %>% 
+  filter(!is.na(date), !is.na(text))
+
+#sort from least recent to most recent 
+sorted_text_date <- text_date %>% arrange(desc(ymd_hms(text_date$date)))
+#most recent
+most_recent <- sorted_text_date %>% head(1)
+most_recent
+```
+```{r}
+#least_recent
+least_recent <- sorted_text_date %>% tail(1)
+least_recent
+```
+most recent:
+text: On day 8 of Olympic competition- gymnast @mykaylaskinner is in the vault final- plus updates on swimming- track andâ\200¦ https://t.co/RKXXLkMmeh	
+
+date:2021-07-31 21:45:00
+
+least recent:
+text:Heartiest congratulations to Mirabai Chanu for starting the medal tally for India in the Tokyo Olympics 2020 by wiâ\200¦ https://t.co/NukYganXeA	
+
+date:2021-07-24 15:52:00
+
+
+
+#### 4.Before starting analyzing the data, it is very important to know how much data is missing. To this end, you are required to write code to:
+#### 4.1. Produce a coloured plot to show the data types in the dataset.
+#### 4.2. Produce missingness plots with the percentages of missing values for each of the columns and also the total missingness percentages in the data.
+
+```{r}
+#4.1 coloured plot that show missing value
+inspectdf::inspect_types(olympics_tweets) %>% inspectdf::show_plot()
+
+```
+Character type:
+"user_screen_name","user_location","user_description", "language"
+
+integer type:
+"user_friends", "retweet_count", "favorite_count","user_followers"
+
+date type:
+"date", "user_created_at"
+
+logical type:
+"favorited"
+
+```{r}
+#4.2. Produce missingness plots with the percentages of missing values for each of the columns and also the total missingness percentages in the data.
+
+#plot missing data
+olympics_tweets %>% visdat::vis_miss(warn_large_data = F,sort_miss = T)
+
+```
+six columns that have missing values:
+
+user_description(11.57%)
+
+user_created_at(<0.1%)
+
+user_folowers(<0.1%)
+
+user_friends(<0.1%)
+
+date(<0.1%)
+
+language(<0.1%)
+
+
+
+#### 5.As some data might be redundant for the following analyses, please write code to remove the data stored in the following columns: “retweet_count”, “favorited”, “favorite_count”, “user_description” and “language”.
+
+```{r}
+# remove columns: “retweet_count”, “favorited”, “favorite_count”, “user_description” and “language”
+olympics_tweets_selected <- olympics_tweets %>%  select(!c(retweet_count,favorited,favorite_count,user_description,language))
+```
+
+
+
+#### 6. When analyzing data collected from Twitter, it is often of equal importance to analyze the tweets (to know people’s viewpoints and opinions) and the creators of those tweets (to understand who has those viewpoints and opinions). Now, let’s first focus on the creators of the tweets.
+
+#### 6.1 A starting point is to understand when those Twitter accounts were created. To this end, please write code to extract the YEAR information contained in the “user_created_at” column, and store this information by adding a new column named “user_created_at_year”.
+
+```{r}
+#find years that tweets created
+olympics_tweets_selected$user_created_at_year <- olympics_tweets_selected$user_created_at %>% format("%Y")
+olympics_tweets_selected$user_created_at_year %>% head(5)
+```
+
+#### 6.2 Write code to produce a bar chart to visualize the number of Twitter accounts created across different years.
+
+```{r}
+olympics_tweets_selected %>% 
+  filter(!is.na(user_created_at)) %>% 
+  count(user_created_at_year) %>% 
+  ggplot(aes(reorder(user_created_at_year,+n),y=n,group_by=user_created_at_year,fill=user_created_at_year))+
+  geom_bar(stat = "identity",position="dodge")+
+  geom_text(aes(label=n,vjust=0))+
+  labs(x= "user_created_at_year",y="amount")
+```
+#### 6.3 For users whose accounts were generated in the same year after 2010, what is the average number of “user_followers” of these users? Write code to produce a bar chart to visualize these average “user_followers” numbers across different years.
+
+```{r}
+#average number of “user_followers”
+olympics_tweets_selected %>% 
+  filter(!is.na(user_created_at)) %>% 
+  group_by(user_created_at_year) %>% 
+  summarise(average = mean(user_followers)) %>% 
+  filter(user_created_at_year > 2010) %>% 
+  ggplot(aes(y=reorder(user_created_at_year,+average),x=average,group_by=user_created_at_year,fill=user_created_at_year))+
+  geom_bar(stat = "identity",position="dodge")+
+  labs(y= "user_created_at_year",x="average user_followers")+
+  geom_text(aes(label=paste(round(average,4)),hjust=0,vjust=0))
+  
+```
+#### 6.4 For users whose accounts were generated in the same year after 2010, what is the average number of “user_friends” of these users? Write code to produce a bar chart to visualize these average “user_friends” numbers across different years.
+
+```{r}
+#average number of “user_friends”
+olympics_tweets_selected %>% 
+  filter(!is.na(user_created_at)) %>% 
+  group_by(user_created_at_year) %>% 
+  summarise(average = mean(user_friends)) %>% 
+  filter(user_created_at_year > 2010) %>% 
+  ggplot(aes(reorder(user_created_at_year,+average),y=average,group_by=user_created_at_year,fill=user_created_at_year))+
+  geom_bar(stat = "identity",position="dodge")+
+  labs(x= "user_created_at_year",y="average user_friends")+
+  geom_text(aes(label=paste(round(average,1)),vjust=0))
+```
+#### 6.5 Based on the three bar charts generated in Question 6.2, Question 6.3, and Question 6.4, what observations can you make? Any potential explanations for your observations?
+
+Charts:
+number of Twitter accounts created across different years:
+
+2009 has the most number of Twitter accounts created
+
+2006 has the least number of Twitter accounts created, which make sense because Twitter was initially started in 2006
+
+
+average “user_followers” numbers across different years:
+
+the highest average user_followers numbers are at 2011 and the lowest is in 2021
+
+although 2016 is in the third rank of highest average user_followers numbers across different years, we can observe a pattern that the earlier you create an account the higher the average user_followers is.
+
+
+“user_friends” numbers across different years:
+
+the highest average user_friends numbers are at 2013 and the lowest is in 2021
+
+we can observe a pattern that the earlier you create an account the higher the average user_followers is.
+
+
+#### 6.6 In addition to when those Twitter accounts were created, it might be worth further exploring where those Twitter users located. Please write code to count the occurrences of different location values (i.e., the column “user_location”) and display the top 30 most frequent location values. Please do NOT include NA values in your results. Are there any odd values observed in the top 30 most frequent locations? How many tweets are associated with these top 30 most frequent location values?
+
+```{r}
+#occurrences of top 30 locations
+olympics_tweets_selected_cleaned <- olympics_tweets_selected %>% 
+  filter(!is.na(user_location)) %>% group_by(user_location) %>% 
+  summarise(appearance = n())
+top_30 <- olympics_tweets_selected_cleaned[order(olympics_tweets_selected_cleaned$appearance,decreasing = T),] %>% 
+  head(30)
+#print top 30 appearance locaitons
+top_30
+```
+odd values observed in the top 30 most frequent locations:
+
+there are locations that have different names but they all mean the same location, and they all have different number of occurrence.
+examples:
+London-England(1087) and London(1067),
+United states(822) and USA(411),
+United Kindom(572) and UK(392),
+Melbourne- Victoria(331) and Melbourne- Australia(272)
+
+there values that is not location name:
+examples:
+she/her(486)
+
+```{r}
+#total tweets associated with these top 30 most frequent location values
+cat("total tweets associated with these top 30 most frequent location values: ", top_30$appearance %>% sum())
+```
+
+#### 7.1 Similar to what we did in Question 5.1, please write code to extract the DATE information contained in the “date” column (e.g., the part “25/7/21” should be extracted from “25/7/21 16:29”), and store this information by adding a new column named “date_extracted”.
+
+```{r}
+olympics_tweets_selected$date_extracted <- olympics_tweets_selected$date %>% as.Date()
+olympics_tweets_selected$date_extracted %>% head(5)
+```
+
+#### 7.2 Please write code to produce a bar chart to visualize the number of tweets posted in different dates. Which date has the lowest number of tweets? Please do not include NAs in your answers.
+```{r}
+olympics_tweets_selected %>%
+  filter(!is.na(date_extracted)) %>% 
+  group_by(date_extracted) %>% 
+  count(date_extracted) %>% 
+  ggplot(aes(x=reorder(date_extracted,+n),y=n,fill=date_extracted))+
+  geom_bar(stat='identity',position = 'dodge')+
+  labs(x='Dates',y="total tweets")
+```
+From the graph we can obeserve that 2021-07-24 has the lowest tweets
+
+#### 7.3 Please write code to calculate the length of the text contained in each tweet (measured in characters) and produce a bar chart to calculate the number of tweets of the following length
+```{r}
+#create a text_length column
+olympics_tweets_selected$text_length <- olympics_tweets_selected$text %>% nchar()
+
+#define bins size and save in a new column named bin
+
+#bin size: [1-40]
+olympics_tweets_selected$bin[olympics_tweets_selected$text_length >= 1 & olympics_tweets_selected$text_length <=40] <- "1-40"
+
+#bin size: [41-80]
+olympics_tweets_selected$bin[olympics_tweets_selected$text_length >= 41 & olympics_tweets_selected$text_length <=80] <- "41-80"
+
+#bin size: [81-120]
+olympics_tweets_selected$bin[olympics_tweets_selected$text_length >= 81 & olympics_tweets_selected$text_length <=120] <- "81-120"
+
+#bin size: [121-160]
+olympics_tweets_selected$bin[olympics_tweets_selected$text_length >= 121 & olympics_tweets_selected$text_length <=160] <- "121-160"
+
+#bin size: [201-240]
+olympics_tweets_selected$bin[olympics_tweets_selected$text_length >= 201 & olympics_tweets_selected$text_length <=240] <- "201-240"
+
+#bin size: [>=241]
+olympics_tweets_selected$bin[olympics_tweets_selected$text_length >= 241] <- ">=241"
+
+#plot bar chart
+olympics_tweets_selected %>% 
+#remove na value in bin
+  filter(!is.na(bin)) %>% 
+  #group by bin
+  group_by(bin) %>% 
+  count() %>% 
+  ggplot(aes(x=bin,y=n,fill=bin))+
+  geom_bar(stat = "identity")+
+  geom_text(aes(label=n, vjust=0))
+```
+#### 7.4 In Twitter, people often interact with one another by mentioning another account’s username, which is preceded by the "@" symbol (e.g., “Hello @TwitterSupport!”). How many tweets contain another account’s username in the dataset? Among the tweets containing another account’s username, how many of them contain at least three different accounts’ usernames?
+
+```{r}
+#because all name is preceded by the @ symboy. Thus, i only need to count how many @ is used in each text
+string <- str_count(olympics_tweets_selected$text, "@")
+#count numbers of at least one different accounts and at least three different accounts
+cat("at least one different accounts:",length(string[string > 0])," at least three different accounts:",length(string[string >3]))
+```
+## Task C
+
+####1. Construct a linear regression model (denoted as Model 1) and produce the evaluation of the model using the evaluation metrics you learned in class such as R. Explain how well the model fits the data.
+
+```{r}
+#load dataset
+predictive_df <- read.csv("predictive_twitter_data.csv")
+
+#construct a linear regression model
+model1 <- lm(predictive_df$relevanceJudge ~., data= predictive_df)
+
+#produce evaluation metrics
+summary(model1)
+```
+the R square is 0.1309
+
+####2. Sort the 24 features according to their corresponding coefficients in Model 1 in an descending order. What are the top 10 features in the sorted list? Please only use these top 10 features to construct a new linear regression model (denoted as Model 2). justify your explanation.
+```{r}
+#calculate coefficients
+coeff <- coefficients(model1)
+
+coeffs <- coeff[order(coeff,decreasing = T)]
+coeffs
+
+coeffs %>% 
+  names()%>% 
+  head(11)
+
+model2 <- lm(predictive_df$relevanceJudge ~ semantic_overlap+hasURL+isVerified+ï..text_score+`X.entityTypes`+twitterAge + text_score_expansion + `X.entities` + isGeoEnabled + nListed, data = predictive_df)
+
+#produce evaluation metrics
+summary(model2)
+
+summary(model1)$r.squared
+
+summary(model2)$r.squared
+
+
+```
+
+```{r}
+anova(model1, model2)
+```
+overall, both model1 and 2 are not good. but model1 is slightly better than the model2
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
